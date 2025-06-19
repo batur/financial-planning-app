@@ -10,7 +10,7 @@ import {
 import { useGetTableData } from "@/hooks";
 import { TableDataItem } from "@/hooks/useGetTableData";
 import useVariablesStore from "@/stores/useVariablesStore";
-import { KeyboardEvent, useEffect, useReducer } from "react";
+import { FocusEvent, KeyboardEvent, useEffect } from "react";
 import useUIEffectsStore from "@/stores/useUIEffectsStore";
 import calculator from "@/utils/calculator";
 
@@ -35,7 +35,6 @@ const columns = [
 ];
 
 const Table = () => {
-  const rerender = useReducer(() => ({}), {})[1];
   const { variables, setInitialVariables, setNewVariables, updatedVariable } =
     useVariablesStore();
   const { isNewVariableTriggered, setIsNewVariableTriggered } =
@@ -81,8 +80,19 @@ const Table = () => {
       e.stopPropagation();
       console.log("Updated Variable:", { name, value });
       updatedVariable({ name, value });
-      return rerender();
     }
+  };
+
+  const handleBlur = (
+    name: string,
+    value: string,
+    e: FocusEvent<HTMLTableCellElement>
+  ) => {
+    if (value.trim() === "Enter Formula" || value.trim() === "") {
+      e.currentTarget.innerText = "";
+      return;
+    }
+    updatedVariable({ name, value });
   };
 
   return (
@@ -122,6 +132,15 @@ const Table = () => {
                       contentEditable
                       key={cell.id}
                       className="p-2 border-b border-black max-w-[400px] w-full overflow-hidden text-ellipsis"
+                      onBlur={(e) => {
+                        if (isValueCell) {
+                          handleBlur(
+                            row.getValue("name"),
+                            (e.target as HTMLTableCellElement).innerText,
+                            e
+                          );
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (isValueCell) {
                           handleUpdatedVariable({
