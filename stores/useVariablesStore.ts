@@ -5,6 +5,7 @@ type VariableStore = {
   variables: TableDataItem[];
   setInitialVariables: (variables: TableDataItem[]) => void;
   setNewVariables: ({ name, value }: { name: string; value?: string }) => void;
+  updatedVariable: ({ name, value }: { name: string; value: string }) => void;
 };
 
 const useVariablesStore = create<VariableStore>((set) => ({
@@ -22,6 +23,13 @@ const useVariablesStore = create<VariableStore>((set) => ({
           category: "default",
         },
       ],
+    }));
+  },
+  updatedVariable: ({ name, value }) => {
+    set((state) => ({
+      variables: state.variables.map((variable) =>
+        variable.name === name ? { ...variable, value } : variable
+      ),
     }));
   },
 }));
