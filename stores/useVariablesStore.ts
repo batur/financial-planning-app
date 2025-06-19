@@ -21,6 +21,7 @@ const useVariablesStore = create<VariableStore>((set) => ({
           id: String(state.variables.length + 1),
           value: value || "",
           category: "default",
+          result: "",
         },
       ],
     }));

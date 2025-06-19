@@ -10,11 +10,15 @@ import {
 import { useGetTableData } from "@/hooks";
 import { TableDataItem } from "@/hooks/useGetTableData";
 import useVariablesStore from "@/stores/useVariablesStore";
-import { useEffect, useReducer } from "react";
+import { KeyboardEvent, useEffect, useReducer } from "react";
 import useUIEffectsStore from "@/stores/useUIEffectsStore";
 import calculator from "@/utils/calculator";
 
-const columnHelper = createColumnHelper<TableDataItem>();
+const columnHelper = createColumnHelper<
+  TableDataItem & {
+    result?: string;
+  }
+>();
 const columns = [
   columnHelper.accessor("name", {
     header: "Name",
@@ -22,6 +26,10 @@ const columns = [
   }),
   columnHelper.accessor("value", {
     header: "Value",
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor("result", {
+    header: "result",
     cell: (info) => info.getValue(),
   }),
 ];
@@ -55,6 +63,28 @@ const Table = () => {
     setIsNewVariableTriggered(false);
   };
 
+  const handleUpdatedVariable = ({
+    name,
+    value,
+    e,
+  }: {
+    name: string;
+    value: string;
+    e: KeyboardEvent<HTMLTableCellElement>;
+  }) => {
+    if (
+      e.key === "Enter" &&
+      value.trim() !== "Enter Formula" &&
+      value.trim() !== ""
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("Updated Variable:", { name, value });
+      updatedVariable({ name, value });
+      return rerender();
+    }
+  };
+
   return (
     <div className="text-black flex flex-col h-full overflow-hidden p-5 mb-15">
       <table className=" max-w-1/4 h-full">
@@ -85,54 +115,35 @@ const Table = () => {
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => {
                   const isValueCell = cell.column.id === "value";
-                  const isValueEmpty = !cell.getValue();
+                  const isResultCell = cell.column.id === "result";
+                  console.log("Cell:", row.getValue("value"));
                   return (
                     <td
                       contentEditable
                       key={cell.id}
-                      onBlur={(e) => {
-                        const newValue = e.currentTarget.innerText;
-                        if (isValueCell) {
-                          updatedVariable({
-                            name: row.original.name,
-                            value: newValue,
-                          });
-                          rerender();
-                        }
-                      }}
                       className="p-2 border-b border-black max-w-[400px] w-full overflow-hidden text-ellipsis"
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const newValue = (e.target as HTMLTableCellElement)
-                            .innerText;
-
-                          if (newValue.trim() === "New Formula") {
-                            console.log("New Formula triggered");
-                            return;
-                          }
-                          if (isValueCell) {
-                            updatedVariable({
-                              name: row.original.name,
-                              value: newValue,
-                            });
-                            rerender();
-                          }
-                          return;
+                        if (isValueCell) {
+                          handleUpdatedVariable({
+                            name: row.getValue("name"),
+                            value: (e.target as HTMLTableCellElement).innerText,
+                            e: e,
+                          });
                         }
                       }}
                     >
-                      {!isValueCell ? (
-                        flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
-                      ) : isValueEmpty ? (
-                        <span className="text-gray-500">Enter Formula</span>
-                      ) : (
-                        !(cell.getValue() === "New Formula") &&
-                        calculator(String(cell.getValue()), variables)
-                      )}
+                      {isResultCell
+                        ? calculator(
+                            String(row.getValue("value")),
+                            variables,
+                            variables.find(
+                              (v) => v.name === row.getValue("name")
+                            )?.id
+                          )
+                        : flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                     </td>
                   );
                 })}

@@ -4,23 +4,39 @@ import { TableDataItem } from "@/hooks/useGetTableData";
  * Calculator function that evaluates mathematical expressions with ID references
  * @param {string} input - The input expression, which may contain ID references like <id_39>
  * @param {TableDataItem[]} store - The data store containing items with values to substitute
+ * @param {string} [targetId] - Optional ID of the item to update with the result
  * @returns {number} The calculated result
  */
-function calculator(input: string, store: TableDataItem[]): number {
+function calculator(
+  input: string,
+  store: (TableDataItem & {
+    result?: string;
+  })[],
+  targetId?: string
+): number {
   // Replace all ID references with their corresponding values from the store
   const processedInput = replaceIdReferences(input, store);
 
   // Evaluate the processed expression
-  return evaluateExpression(processedInput);
+  const result = evaluateExpression(processedInput);
+
+  // Update the result field if targetId is provided
+  if (targetId) {
+    const targetItem = store.find((item) => item.id === targetId);
+    if (targetItem) {
+      targetItem.result = result.toString();
+    }
+  }
+
+  return result;
 }
 
-/**
- * Replaces all ID references with their values from the store
- * @param {string} input - The input string with ID references
- * @param {TableDataItem[]} store - The data store
- * @returns {string} The input with all ID references replaced by their values
- */
-function replaceIdReferences(input: string, store: TableDataItem[]): string {
+function replaceIdReferences(
+  input: string,
+  store: (TableDataItem & {
+    result?: string;
+  })[]
+): string {
   // Match pattern <id_X> where X is a number
   const idRefPattern = /<id_(\d+)>/g;
 
