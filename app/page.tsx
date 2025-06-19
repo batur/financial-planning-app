@@ -11,6 +11,8 @@ import { useGetTableData } from "@/hooks";
 import { TableDataItem } from "@/hooks/useGetTableData";
 import useVariablesStore from "@/stores/useVariablesStore";
 import { useEffect } from "react";
+import useUIEffectsStore from "@/stores/useUIEffectsStore";
+import calculator from "@/utils/calculator";
 
 const columnHelper = createColumnHelper<TableDataItem>();
 const columns = [
@@ -27,6 +29,8 @@ const columns = [
 export default function Home() {
   const { variables, setInitialVariables, setNewVariables } =
     useVariablesStore();
+  const { isNewVariableTriggered, setIsNewVariableTriggered } =
+    useUIEffectsStore();
   const { data, isLoading, isSuccess } = useGetTableData();
 
   useEffect(() => {
@@ -41,10 +45,15 @@ export default function Home() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const handleNewVariableClick = (name: string) => {
-    console.log("New variable clicked");
-    setNewVariables(name);
+  const handleNewVariableClick = () => {
+    setIsNewVariableTriggered(true);
   };
+
+  const handleNewVariableSubmit = (name: string) => {
+    setNewVariables({ name });
+    setIsNewVariableTriggered(false);
+  };
+
   return (
     <div className="text-black flex flex-col h-full overflow-hidden p-5 mb-15">
       <table className=" max-w-1/2 h-full">
@@ -73,21 +82,51 @@ export default function Home() {
           {isSuccess &&
             table.getRowModel().rows.map((row) => (
               <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-2 border-b">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const isValueCell = cell.column.id === "value";
+                  const isValueEmpty = !cell.getValue();
+                  return (
+                    <td key={cell.id} className="p-2 border-b border-black">
+                      {!isValueCell ? (
+                        flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
+                      ) : isValueEmpty ? (
+                        <span className="text-gray-500">Enter Formula</span>
+                      ) : (
+                        calculator(String(cell.getValue()), variables)
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           <tr className="border-b">
-            <td
-              role="button"
-              className="p-2 cursor-pointer"
-              onClick={() => handleNewVariableClick("test variable")}
-            >
-              New variable
-            </td>
+            {isNewVariableTriggered ? (
+              <td className="p-2 shrink">
+                <input
+                  type="text"
+                  placeholder="Enter variable name"
+                  className="border rounded p-1 "
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleNewVariableSubmit(
+                        (e.target as HTMLInputElement).value
+                      );
+                    }
+                  }}
+                />
+              </td>
+            ) : (
+              <td
+                role="button"
+                className="p-2 cursor-pointer"
+                onClick={handleNewVariableClick}
+              >
+                New variable
+              </td>
+            )}
           </tr>
         </tbody>
       </table>

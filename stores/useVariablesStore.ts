@@ -4,21 +4,21 @@ import type { TableDataItem } from "@/hooks/useGetTableData";
 type VariableStore = {
   variables: TableDataItem[];
   setInitialVariables: (variables: TableDataItem[]) => void;
-  setNewVariables: (variableName: string) => void;
+  setNewVariables: ({ name, value }: { name: string; value?: string }) => void;
 };
 
 const useVariablesStore = create<VariableStore>((set) => ({
   variables: [],
   setInitialVariables: (variables: TableDataItem[]) =>
     set(() => ({ variables })),
-  setNewVariables: (variableName: string) => {
+  setNewVariables: ({ name, value }) => {
     set((state) => ({
       variables: [
         ...state.variables,
         {
-          name: variableName,
+          name: name,
           id: String(state.variables.length + 1),
-          value: "",
+          value: value || "",
           category: "default",
         },
       ],
