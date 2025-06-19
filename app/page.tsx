@@ -56,7 +56,7 @@ export default function Home() {
 
   return (
     <div className="text-black flex flex-col h-full overflow-hidden p-5 mb-15">
-      <table className=" max-w-1/2 h-full">
+      <table className=" max-w-1/4 h-full">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -86,7 +86,11 @@ export default function Home() {
                   const isValueCell = cell.column.id === "value";
                   const isValueEmpty = !cell.getValue();
                   return (
-                    <td key={cell.id} className="p-2 border-b border-black">
+                    <td
+                      contentEditable
+                      key={cell.id}
+                      className="p-2 border-b border-black max-w-[400px] w-full overflow-hidden text-ellipsis"
+                    >
                       {!isValueCell ? (
                         flexRender(
                           cell.column.columnDef.cell,
