@@ -1,6 +1,6 @@
 "use client";
 
-import Table from "@/components/Table";
+import Table from "@/components/DataTable";
 
 export default function Home() {
   return (
